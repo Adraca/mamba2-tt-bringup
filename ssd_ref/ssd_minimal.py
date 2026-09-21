@@ -41,6 +41,9 @@ def ssd_chunked(x, dt, A, B, C, D=None, chunk=64):
     a_cumsum = np.cumsum(a, axis=-1)
 
     # 1. diagonal (intra-chunk) blocks
+    # Numerical stability: for a valid SSM, A<0 so a = dt*A <= 0, hence segsum(a) <= 0 and exp(.) in (0,1].
+    # No overflow is possible; underflow to 0 is the correct infinite-decay limit. (An `exp(x-max)` shift
+    # is therefore unnecessary for valid decays; it would only matter if A>0 were passed, which is invalid.)
     Lmat = np.exp(segsum(a))                                          # (B,H,C,Q,Q)
     scores = np.einsum("bcqhn,bckhn->bhcqk", C, B)                    # C Bᵀ per chunk
     Ydiag = np.einsum("bhcqk,bhcqk,bckhp->bcqhp", scores, Lmat, x)

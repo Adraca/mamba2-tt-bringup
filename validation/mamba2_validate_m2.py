@@ -50,6 +50,9 @@ def make_inputs():
 
 
 def golden_naive(C, B, x, dt, A):
+    # The INDEPENDENT oracle: the plain O(L) SSM recurrence, sharing no code with the chunked path under
+    # test (or with ssd_minimal.ssd_chunked). Agreement at PCC 1.0 therefore validates the chunked scan,
+    # and ssd_ref/test_ssd_consistency.py separately cross-checks ssd_chunked==this over many configs.
     xd = x * dt[:, None]; a = np.exp(dt * A)
     h = np.zeros((P, N)); ys = []
     for t in range(L):
