@@ -9,7 +9,7 @@ Gate = TT's standard bring-up threshold **PCC ≥ 0.99**.
 | **M1** | Single-chunk SSD **diagonal block** `Ydiag = (C·Bᵀ ∘ L)·x` — the core SSD-as-structured-masked-attention, as a ttnn matmul→mul→matmul graph | **1.000000** | ✅ SIM-CONFIRMED |
 | M1b | Decay-mask identity `L = tril(exp(segsum(a))) == tril(exp(cumsum diff))` (device-cumsum path is valid) | 1.000000 | ✅ verified |
 | **M2** | **Full multi-chunk SSD scan** — all four terms (diagonal `Ydiag`, off-diagonal state-read `Yoff`, chunk-state build, inter-chunk recurrence) as a ttnn op-graph, L=128 / 2 chunks | **1.000000** | ✅ SIM-CONFIRMED |
-| **M3** | **Full `Mamba2` mixer block** — in_proj + per-head SSD scan + **gated RMSNorm** + out_proj (ttnn); conv1d + softplus + splits on host this milestone | **0.999987** | ✅ SIM-CONFIRMED |
+| **M3** | **`Mamba2` mixer block, tensor ops on-device** — in_proj + per-head SSD scan + **gated RMSNorm** + out_proj validated in ttnn. Causal conv1d + softplus(dt) + projection splits are host this milestone (→ M3b). So the PCC validates the on-device ops, not yet conv1d/softplus. | **0.999987** | ✅ SIM-CONFIRMED (on-device ops) |
 | M3b | Move causal conv1d + softplus(dt) on-device | — | next |
 | — | On-silicon forward + throughput | — | REQUIRES-SILICON |
 

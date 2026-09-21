@@ -16,7 +16,7 @@ Codestral-Mamba, Zamba), none of which are on TT yet.
 - [ ] SSD reference (torch `ssd_minimal` + full `Mamba2` block) pinned as the golden
 - [x] M2 full multi-chunk SSD scan SIM-CONFIRMED (PCC 1.000000); device cumsum/segsum next
 - [x] M1 diagonal block SIM-CONFIRMED (PCC 1.000000); per-subblock then full block (target ≥ 0.99)
-- [x] M3 full Mamba2 mixer block SIM-CONFIRMED (PCC 0.999987)
+- [x] M3 Mamba2 block tensor-ops SIM-CONFIRMED (in_proj+SSD+gated-norm+out_proj, PCC 0.999987); conv1d+softplus host → M3b
 - [ ] Model integration (`models/experimental/mamba2/`) + weight loading from `state-spaces/mamba2-*`
 - [ ] Packaging (tt-cli / tt-model-manager bundle)
 - [ ] On-silicon forward + perf (REQUIRES-SILICON — pending cloud/hardware access)

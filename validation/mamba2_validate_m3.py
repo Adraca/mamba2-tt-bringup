@@ -24,7 +24,10 @@ EPS = 1e-5
 
 def ssd_chunked_ttnn(d, C, B, x, dt, A, chunk=64):
     """Dimension-agnostic per-head chunked SSD in ttnn (same math as M2, dims derived from inputs).
-    C,B:(L,N)  x:(L,P)  dt:(L,)  A:scalar -> y:(L,P) numpy. Decay factors host-computed."""
+    C,B:(L,N)  x:(L,P)  dt:(L,)  A:scalar -> y:(L,P) numpy. Decay factors host-computed.
+    Returns the PURE scan WITHOUT the D skip — the caller adds `D * x` (matching ssd_naive, which applies
+    it internally). `entry[q]=exp(acs[q])` carries the chunk-entry state forward to position q (no double
+    decay): this is the exact formula M2 validated at PCC 1.000000 vs the naive recurrence."""
     L, N = B.shape
     P = x.shape[1]
     nc = L // chunk
@@ -101,8 +104,9 @@ def main():
     gold = mamba2_block(u, W, cfg)
     out = run_ttnn_block(u, W, cfg)
     p = pcc(out, gold)
-    print(f"  M3 full Mamba2 mixer block      PCC = {p:.6f}   {'PASS' if p >= 0.99 else 'FAIL'}")
-    print(f"     (ttnn: in_proj + per-head SSD + gated RMSNorm + out_proj; host: conv1d, softplus, splits)")
+    print(f"  M3 Mamba2 block, tensor ops on ttnn   PCC = {p:.6f}   {'PASS' if p >= 0.99 else 'FAIL'}")
+    print(f"     ON-DEVICE (validated): in_proj + per-head chunked SSD + gated RMSNorm + out_proj")
+    print(f"     HOST this milestone (M3b moves on-device): causal conv1d, softplus(dt), the projection splits")
 
 
 if __name__ == "__main__":

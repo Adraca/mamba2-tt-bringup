@@ -32,6 +32,7 @@ def ssd_chunked(x, dt, A, B, C, D=None, chunk=64):
     Bb, L, H, P = x.shape
     N = B.shape[-1]
     assert L % chunk == 0, "seqlen must be a multiple of chunk"
+    x_in = x                                                           # keep the original input for the D skip
     x = x * dt[..., None]                                              # discretize (Δ·x)
     a = dt * A                                                         # (B,L,H) log a_t
     nc = L // chunk
@@ -66,8 +67,7 @@ def ssd_chunked(x, dt, A, B, C, D=None, chunk=64):
 
     y = (Ydiag + Yoff).reshape(Bb, L, H, P)
     if D is not None:
-        xu = (x.reshape(Bb, L, H, P) / dt[..., None])                # undiscretized x
-        y = y + xu * D[None, None, :, None]
+        y = y + x_in * D[None, None, :, None]                        # D skip on the ORIGINAL input (no /dt)
     return y
 
 

@@ -55,7 +55,7 @@ def make_weights(cfg, seed=0):
         conv_w=rng.standard_normal((conv_dim, cfg["conv_k"])) * s,
         conv_b=rng.standard_normal(conv_dim) * s,
         dt_bias=rng.standard_normal(nheads) * s,
-        A_log=rng.standard_normal(nheads) * 0.5,                     # A = -exp(A_log) < 0
+        A_log=np.log(rng.uniform(1.0, 16.0, nheads)),                # HF-style init: A = -exp(A_log) in [-16,-1]
         D=rng.standard_normal(nheads) * s,
         norm_w=np.ones(d_inner) + rng.standard_normal(d_inner) * s,
         out_proj=rng.standard_normal((dm, d_inner)) * s,
@@ -77,7 +77,9 @@ def mamba2_block(u, W, cfg):
     B = xBC[:, di:di + ng * ds]                                      # (L, ng*ds); ng=1 -> shared
     C = xBC[:, di + ng * ds:]
     A = -np.exp(W["A_log"])                                          # (nheads,)
+    assert ng == 1, "this reference implements the ngroups=1 case (B,C shared across heads)"
     # per-head scan (ngroups=1: B,C shared across heads). x_h:(L,headdim), reuse ssd_naive per head.
+    # NOTE: ssd_naive applies the D skip internally (y + D*x), so the per-head y already includes it.
     x_h = x.reshape(L, nh, hd)
     Bg = B.reshape(L, ng, ds)[:, 0, :]                              # (L, ds)
     Cg = C.reshape(L, ng, ds)[:, 0, :]
