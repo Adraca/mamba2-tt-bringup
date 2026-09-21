@@ -8,7 +8,7 @@ Gate = TT's standard bring-up threshold **PCC ≥ 0.99**.
 |---|---|---|---|
 | **M1** | Single-chunk SSD **diagonal block** `Ydiag = (C·Bᵀ ∘ L)·x` — the core SSD-as-structured-masked-attention, as a ttnn matmul→mul→matmul graph | **1.000000** | ✅ SIM-CONFIRMED |
 | M1b | Decay-mask identity `L = tril(exp(segsum(a))) == tril(exp(cumsum diff))` (device-cumsum path is valid) | 1.000000 | ✅ verified |
-| M2 | Multi-chunk: chunk-state build + inter-chunk scan + off-diagonal read | — | next |
+| **M2** | **Full multi-chunk SSD scan** — all four terms (diagonal `Ydiag`, off-diagonal state-read `Yoff`, chunk-state build, inter-chunk recurrence) as a ttnn op-graph, L=128 / 2 chunks | **1.000000** | ✅ SIM-CONFIRMED |
 | M3 | Full `Mamba2` mixer (in/out proj + causal conv1d + gated norm) | — | pending |
 | — | On-silicon forward + throughput | — | REQUIRES-SILICON |
 
