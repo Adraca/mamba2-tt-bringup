@@ -1,35 +1,39 @@
-# Mamba-2 / SSD on Tenstorrent
+# Mamba-2 (SSD) on Tenstorrent
 
-Hardware-free bring-up of the **Mamba-2 State-Space-Duality (SSD)** layer on Tenstorrent (Blackhole),
-validated on the `ttsim` functional simulator against a PyTorch reference at the **PCC ≥ 0.99** bring-up gate.
+Bringing up the Mamba-2 State-Space-Duality layer on Blackhole, validated on the `ttsim` functional
+simulator against a plain PyTorch/NumPy reference. No hardware needed for any of this yet.
 
-## Why Mamba-2 (and why it's a good TT fit)
-tt-metal today ships only **Mamba-1** (`models/demos/wormhole/mamba`, the 2.8B selective-scan model), whose
-sequential associative scan is memory-bandwidth-bound — reflected in its open perf/CI issues. **Mamba-2 is
-different by design:** its SSD formulation re-expresses the same linear state-space recurrence as a sequence of
-**matmuls** (structured masked attention over chunks). Matmul is exactly what the Tensix matrix engine is built
-for, so Mamba-2 is a *better* architectural fit for TT than the Mamba-1 demo it complements — and the SSD
-chunk kernel is a reusable substrate for the whole 2025–26 hybrid-SSM family (Falcon-H1, Granite-4.0-H,
-Codestral-Mamba, Zamba), none of which are on TT yet.
+## Why bother — isn't Mamba-1 already there?
+It is (`models/demos/wormhole/mamba`), but Mamba-1's selective scan is a sequential associative scan, so it's
+memory-bandwidth-bound and doesn't lean on what the Tensix cores are actually good at. Mamba-2 is the
+interesting one: its SSD formulation rewrites the exact same linear recurrence as a chunked, matmul-heavy
+computation (a decay-masked attention within each chunk, plus a short recurrence across chunk states). That's
+a much better fit for the matrix engine. And the SSD chunk kernel isn't Mamba-specific — it's the shared
+substrate under the whole 2025-26 hybrid-SSM crowd (Falcon-H1, Granite-4-H, Codestral-Mamba…), none of which
+run on TT today. So it felt like the right place to start.
 
-## Status
-- [ ] SSD reference (torch `ssd_minimal` + full `Mamba2` block) pinned as the golden
-- [x] M2 full multi-chunk SSD scan SIM-CONFIRMED (PCC 1.000000); device cumsum/segsum next
-- [x] M1 diagonal block SIM-CONFIRMED (PCC 1.000000); per-subblock then full block (target ≥ 0.99)
-- [x] M3 Mamba2 block tensor-ops SIM-CONFIRMED (in_proj+SSD+gated-norm+out_proj, PCC 0.999987); conv1d+softplus host → M3b
-- [ ] Model integration (`models/experimental/mamba2/`) + weight loading from `state-spaces/mamba2-*`
-- [ ] Packaging (tt-cli / tt-model-manager bundle)
-- [ ] On-silicon forward + perf (REQUIRES-SILICON — pending cloud/hardware access)
+The math and how each piece maps onto Tensix ops is in `design/SSD_MATH_AND_TT_MAPPING.md`.
 
-Every result is labelled **SIM-CONFIRMED** (PCC on ttsim), **SIM-ONLY** (sim can't be an oracle for it), or
-**REQUIRES-SILICON** (perf/throughput/serve). ttsim is bit-exact for arithmetic but not for timing/RNG/perf.
+## Where it's at
+Everything below is on the simulator (bit-exact fp32), checked against an independent reference at TT's usual
+bring-up bar of PCC ≥ 0.99:
+
+- [x] SSD chunked scan (diagonal blocks + inter-chunk recurrence + off-diagonal reads) — matches a plain O(L)
+      recurrence to ~1e-16 (fp64), and runs as a real ttnn op-graph on the sim at **PCC 1.0**
+- [x] Full Mamba-2 mixer block (in_proj + per-head SSD + gated RMSNorm + out_proj) on the sim at **PCC 0.9999**
+- [ ] Move the causal conv1d + softplus on-device (they're on the host in this pass, so the PCC above covers
+      the matmul/scan/norm path, not those two ops yet)
+- [ ] Wire it into a real model dir + load `state-spaces/mamba2-*` weights
+- [ ] On-device forward + throughput — the part I can't do without a card
+
+I don't have Blackhole hardware, so the on-silicon forward and any perf numbers are the missing piece.
 
 ## Layout
-- `design/` — the SSD math derivation + the chunked-scan algorithm + the TT mapping (the core doc).
-- `ssd_ref/` — pinned torch reference (`ssd_minimal_discrete`) used as the golden.
-- `ttnn_impl/` — the chunked-SSD implemented as a ttnn op graph.
-- `validation/` — torch-free ttnn PCC harness run on the ttsim functional simulator ($0, no card).
+- `design/` — the SSD derivation, the chunked algorithm, and the op-by-op Tensix mapping
+- `ssd_ref/` — the NumPy oracle (`ssd_minimal.py`) plus a consistency sweep across shapes/decay ranges
+- `ttnn_impl/` · `validation/` — the ttnn op-graph and the sim harness that produces the PCC numbers above
 
-## Reproduce the sim validation ($0, no hardware)
-tt-metal release Docker image + `libttsim_bh.so`; `soc_descriptor.yaml` in CWD; then run the
-`validation/` scripts under `TT_METAL_SIMULATOR=libttsim_bh.so`.
+## Run the reference yourself (no hardware, no TT install)
+`cd ssd_ref && python3 ssd_minimal.py` prints the chunked-vs-naive agreement, and
+`python3 test_ssd_consistency.py` sweeps it. The ttnn/ttsim validation runs inside the tt-metal release image
+with `libttsim`; notes in `validation/`.

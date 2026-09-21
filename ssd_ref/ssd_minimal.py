@@ -4,7 +4,7 @@ ssd_minimal.py — clean-room NUMPY reference for the Mamba-2 chunked SSD scan (
 Implements the chunked State-Space-Duality algorithm from Dao & Gu, "Transformers are SSMs" (Mamba-2),
 following the four-term decomposition in ../design/SSD_MATH_AND_TT_MAPPING.md. This is the fp64 numerical
 oracle the ttnn implementation is validated against (PCC >= 0.99 on ttsim). Kept torch-free (numpy only) to
-match the fleet's ttsim harness pattern and run anywhere. `ssd_naive` is the plain O(L) recurrence used to
+be portable and run anywhere. `ssd_naive` is the plain O(L) recurrence used to
 prove the chunked result is correct.
 
 Shapes: B=batch, L=seqlen, H=heads, P=head_dim, N=state_dim, Q=chunk_len (L % Q == 0).

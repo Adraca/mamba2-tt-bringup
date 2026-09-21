@@ -1,11 +1,11 @@
 """
 test_ssd_consistency.py — adversarial self-consistency sweep for the SSD golden.
 
-Directly answers the audit concern "does chunked==naive only by luck of dimensions / seed?".
+Directly answers the question "does chunked==naive only by luck of dimensions / seed?".
 Runs ssd_chunked vs ssd_naive over many randomized configs: varied batch/heads/seqlen/state/head-dim,
 multiple chunk sizes, and a wide range of decay magnitudes (including large-|A| that would expose any
 segsum / state-accumulation / decay-direction error). If every config matches to fp64 machine precision,
-the segsum + chunk-state + inter-chunk recurrence are correct (refuting the static "CRITICAL" claims).
+the segsum + chunk-state + inter-chunk recurrence are correct beyond the single validation config.
 """
 import numpy as np
 from ssd_minimal import ssd_chunked, ssd_naive, softplus
