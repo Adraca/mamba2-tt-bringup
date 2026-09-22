@@ -3,6 +3,8 @@
 Bringing up the Mamba-2 State-Space-Duality layer on Blackhole, validated on the `ttsim` functional
 simulator against a plain PyTorch/NumPy reference. No hardware needed for any of this yet.
 
+![Mamba-2 SSD chunked scan](assets/ssd_scan_diagram.png)
+
 ## Why bother — isn't Mamba-1 already there?
 It is (`models/demos/wormhole/mamba`), but Mamba-1's selective scan is a sequential associative scan, so it's
 memory-bandwidth-bound and doesn't lean on what the Tensix cores are actually good at. Mamba-2 is the
@@ -17,6 +19,8 @@ The math and how each piece maps onto Tensix ops is in `design/SSD_MATH_AND_TT_M
 ## Where it's at
 Everything below is on the simulator (bit-exact fp32), checked against an independent reference at TT's usual
 bring-up bar of PCC ≥ 0.99:
+
+![sim-validation results](assets/mamba2_sim_results.png)
 
 - [x] SSD chunked scan (diagonal blocks + inter-chunk recurrence + off-diagonal reads) — matches a plain O(L)
       recurrence to ~1e-16 (fp64), and runs as a real ttnn op-graph on the sim at **PCC 1.0**
