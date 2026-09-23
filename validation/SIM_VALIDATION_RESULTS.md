@@ -1,3 +1,17 @@
+# Validation results
+
+## ✅ Now confirmed on real hardware (Wormhole N150), 2026-09-23
+The same M1/M2/M3 op-graphs were run on an actual **Wormhole N150** (not the simulator) and match the fp64/
+numpy reference at the same accuracy:
+- **M1** SSD diagonal block — PCC **1.000000**
+- **M2** full multi-chunk SSD scan — PCC **1.000000**
+- **M3** Mamba-2 mixer block (in_proj + per-head SSD + gated RMSNorm + out_proj) — PCC **0.999988**
+
+So the SSD scan and the mixer's tensor path are hardware-confirmed, not just sim. (conv1d + softplus remain
+host this milestone; on-silicon full-model forward + throughput is the next step.)
+
+---
+
 # Sim-validation results (ttsim functional simulator, Blackhole)
 
 All results **SIM-CONFIRMED** = real ttnn op-graph on `libttsim` (bit-exact arithmetic), PCC vs the fp64

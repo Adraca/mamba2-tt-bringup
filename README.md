@@ -17,8 +17,11 @@ run on TT today. So it felt like the right place to start.
 The math and how each piece maps onto Tensix ops is in `design/SSD_MATH_AND_TT_MAPPING.md`.
 
 ## Where it's at
-Everything below is on the simulator (bit-exact fp32), checked against an independent reference at TT's usual
-bring-up bar of PCC ≥ 0.99:
+**Update (2026-09-23): the SSD scan + mixer tensor path are now confirmed on a real Wormhole N150**, at the
+same PCCs as the sim (M1 1.0, M2 1.0, M3 0.9999) — not just the simulator anymore.
+
+Everything below is checked against an independent reference at TT's usual bring-up bar of PCC ≥ 0.99 (first
+on the ttsim functional simulator, then re-run on real Wormhole silicon):
 
 ![sim-validation results](assets/mamba2_sim_results.png)
 
